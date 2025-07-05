@@ -1,0 +1,90 @@
+{
+  "Great Sword": {
+    "id": "1999",
+    "name": "Great Sword",
+    "attributeBlocks": {
+      "this": {
+        "weight": "H",
+        "length": "8",
+        "base_price": "10",
+        "two_handed": "",
+        "weapon": "",
+        "icon_type": "great_sword",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": ""
+      },
+      "unalerted": {
+        "attack_speed": "6",
+        "strength": "H",
+        "sharpness": "1",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "strength": "H",
+        "sharpness": "1",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Armor": {
+    "id": "140",
+    "name": "Armor",
+    "attributeBlocks": {
+      "this": {
+        "vulnerability": "T",
+        "weight": "T",
+        "armor_thrust": "",
+        "armor_swing": "",
+        "armor_smash": "",
+        "fame": "6",
+        "notoriety": "3",
+        "magic": "",
+        "armor": "",
+        "original_game": "",
+        "icon_type": "suitofarmor",
+        "facing": "dark",
+        "armor_row": "3",
+        "alt_monsters1_game": "",
+        "icon_folder": "armor",
+        "rw_expansion_1": "",
+        "item": "",
+        "suitofarmor": ""
+      },
+      "intact": {
+        "base_price": "25",
+        "chit_color": "gold"
+      },
+      "damaged": {
+        "base_price": "18",
+        "chit_color": "yellow"
+      },
+      "destroyed": {
+        "base_price": "5"
+      }
+    },
+    "parts": []
+  },
+  "Make Whole": {
+    "id": "272",
+    "name": "Make Whole",
+    "attributeBlocks": {
+      "this": {
+        "spell": "I",
+        "duration": "instant",
+        "target": "character",
+        "text": "repair damage, wounds, and fatigue",
+        "magic_color": "white",
+        "original_game": "",
+        "heal": "",
+        "repair": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  }
+}

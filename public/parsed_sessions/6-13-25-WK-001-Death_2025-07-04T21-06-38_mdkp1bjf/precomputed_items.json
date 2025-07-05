@@ -1,0 +1,23 @@
+{
+  "Make Whole": {
+    "id": "272",
+    "name": "Make Whole",
+    "attributeBlocks": {
+      "this": {
+        "spell": "I",
+        "duration": "instant",
+        "target": "character",
+        "text": "repair damage, wounds, and fatigue",
+        "magic_color": "white",
+        "original_game": "",
+        "heal": "",
+        "repair": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  }
+}

@@ -118,15 +118,33 @@ export default function Page({ params }: { params: { id: string } }) {
   const [hoveredCharacter, setHoveredCharacter] = useState<string | null>(null);
   const [hoveredCharacterData, setHoveredCharacterData] = useState<any>(null);
   const [hoveredCharacterStats, setHoveredCharacterStats] = useState<any>(null);
+  const [mapReady, setMapReady] = useState(false);
 
+  // Load all session data in parallel for better performance
   useEffect(() => {
-    const fetchSessionData = async () => {
-      console.log('SessionPage: Fetching session data for:', sessionId);
+    const fetchAllSessionData = async () => {
+      console.log('SessionPage: Fetching all session data for:', sessionId);
       try {
-        const response = await fetch(`/api/session/${sessionId}`);
-        console.log('SessionPage: API response status:', response.status);
-        if (response.ok) {
-          const data = await response.json();
+        // Fetch all data in parallel, including pre-computed items
+        const [
+          sessionResponse,
+          titlesResponse,
+          statsResponse,
+          inventoriesResponse,
+          scoresResponse,
+          precomputedItemsResponse
+        ] = await Promise.all([
+          fetch(`/api/session/${sessionId}`),
+          fetch(`/api/session/${sessionId}/session-titles`),
+          fetch(`/api/session/${sessionId}/character-stats`),
+          fetch(`/api/session/${sessionId}/character-inventories`),
+          fetch(`/api/session/${sessionId}/final-scores`),
+          fetch(`/api/session/${sessionId}/precomputed-items`).catch(() => null) // Optional
+        ]);
+
+        // Process session data
+        if (sessionResponse.ok) {
+          const data = await sessionResponse.json();
           console.log('SessionPage: Session data loaded:', data);
           setSessionData(data);
           
@@ -141,34 +159,65 @@ export default function Page({ params }: { params: { id: string } }) {
             const [lastMonth] = dayKeys[dayKeys.length - 1].split('_').map(Number);
             setSelectedMonth(lastMonth);
           }
-          
-          // Fetch session titles from session-titles API
-          try {
-            const titlesResponse = await fetch(`/api/session/${sessionId}/session-titles`);
-            if (titlesResponse.ok) {
-              const titlesData = await titlesResponse.json();
-              setSessionTitles({
-                mainTitle: titlesData.mainTitle,
-                subtitle: titlesData.subtitle
-              });
-            }
-          } catch (error) {
-            console.error('Failed to fetch session titles:', error);
-          }
         } else {
           console.error('SessionPage: Failed to load session data');
         }
+
+        // Process session titles
+        if (titlesResponse.ok) {
+          const titlesData = await titlesResponse.json();
+          setSessionTitles({
+            mainTitle: titlesData.mainTitle,
+            subtitle: titlesData.subtitle
+          });
+        }
+
+        // Process character stats
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          console.log('SessionPage: Character stats loaded:', statsData);
+          setCharacterStats(statsData);
+        } else {
+          console.error('SessionPage: Failed to load character stats, status:', statsResponse.status);
+          setCharacterStats(null);
+        }
+
+        // Process character inventories
+        if (inventoriesResponse.ok) {
+          const invData = await inventoriesResponse.json();
+          console.log('SessionPage: Character inventories loaded:', invData);
+          setCharacterInventories(invData);
+        } else {
+          console.error('SessionPage: Failed to load character inventories, status:', inventoriesResponse.status);
+          setCharacterInventories(null);
+        }
+
+        // Process final scores
+        if (scoresResponse.ok) {
+          const scoresData = await scoresResponse.json();
+          setFinalScores(scoresData);
+        } else {
+          setFinalScores(null);
+        }
+
+        // Process pre-computed items (if available)
+        if (precomputedItemsResponse && precomputedItemsResponse.ok) {
+          const itemsData = await precomputedItemsResponse.json();
+          console.log('SessionPage: Pre-computed items loaded:', Object.keys(itemsData).length);
+          setItemCache(itemsData);
+        } else {
+          console.log('SessionPage: No pre-computed items available, will use individual lookups');
+        }
+
       } catch (error) {
         console.error('SessionPage: Error fetching session data:', error);
       } finally {
         setLoading(false);
       }
-
-      // Character inventories will be fetched in a separate useEffect to avoid race conditions
     };
 
     if (sessionId) {
-      fetchSessionData();
+      fetchAllSessionData();
     }
   }, [sessionId]);
 
@@ -236,73 +285,7 @@ export default function Page({ params }: { params: { id: string } }) {
     };
   }, [isAutoAdvancing, selectedDay, sessionData]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!sessionId) return;
-      
-      console.log('SessionPage: Fetching character stats for:', sessionId);
-      try {
-        const res = await fetch(`/api/session/${sessionId}/character-stats`);
-        console.log('SessionPage: Character stats response status:', res.status);
-        if (res.ok) {
-          const statsData = await res.json();
-          console.log('SessionPage: Character stats loaded:', statsData);
-          setCharacterStats(statsData);
-        } else {
-          console.error('SessionPage: Failed to load character stats, status:', res.status);
-          setCharacterStats(null);
-        }
-      } catch (e) {
-        console.error('SessionPage: Error fetching character stats:', e);
-        setCharacterStats(null);
-      }
-    };
-    fetchStats();
-  }, [sessionId]);
-
-  // Fetch character inventories
-  useEffect(() => {
-    const fetchInventories = async () => {
-      if (!sessionId) return;
-      
-      console.log('SessionPage: Fetching character inventories for:', sessionId);
-      try {
-        const res = await fetch(`/api/session/${sessionId}/character-inventories`);
-        console.log('SessionPage: Character inventories response status:', res.status);
-        if (res.ok) {
-          const invData = await res.json();
-          console.log('SessionPage: Character inventories loaded:', invData);
-          setCharacterInventories(invData);
-        } else {
-          console.error('SessionPage: Failed to load character inventories, status:', res.status);
-          setCharacterInventories(null);
-        }
-      } catch (e) {
-        console.error('SessionPage: Error fetching character inventories:', e);
-        setCharacterInventories(null);
-      }
-    };
-    fetchInventories();
-  }, [sessionId]);
-
-  // Fetch final scores
-  useEffect(() => {
-    const fetchFinalScores = async () => {
-      try {
-        const res = await fetch(`/api/session/${sessionId}/final-scores`);
-        if (res.ok) {
-          setFinalScores(await res.json());
-        }
-      } catch (e) {
-        setFinalScores(null);
-      }
-    };
-    if (sessionId) {
-      fetchFinalScores();
-    }
-  }, [sessionId]);
-
-  // Function to fetch item data
+  // Function to fetch item data with improved caching
   const fetchItem = async (itemName: string): Promise<Item | null> => {
     if (itemCache[itemName]) {
       return itemCache[itemName];
@@ -323,861 +306,67 @@ export default function Page({ params }: { params: { id: string } }) {
     }
   };
 
-  // Function to get chit color as CSS color
-  const getChitColor = (colorName: string): string => {
-    const colorMap: { [key: string]: string } = {
-      'lightorange': '#FFB366',
-      'red': '#FF4444',
-      'blue': '#4444FF',
-      'green': '#44FF44',
-      'yellow': '#FFFF44',
-      'purple': '#FF44FF',
-      'brown': '#8B4513',
-      'grey': '#888888',
-      'gray': '#888888',
-      'white': '#FFFFFF',
-      'black': '#000000',
-      'lightgreen': '#90EE90',
-      'forestgreen': '#228B22'
-    };
-    return colorMap[colorName] || '#FFFFFF';
-  };
-
-  // Function to render armor chit
-  const renderArmorChit = (item: Item, side: 'intact' | 'damaged') => {
-    const sideData = item.attributeBlocks[side];
-    const thisData = item.attributeBlocks.this;
-    const backgroundColor = getChitColor(sideData.chit_color);
-
-    return (
-      <div 
-        key={`${item.id}-${side}`}
-        className="relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1"
-        style={{ backgroundColor }}
-      >
-        {/* Vulnerability (upper left, black text on white square) */}
-        <div className="absolute top-0 left-0">
-          <div className="bg-white text-black text-xs font-bold px-1 rounded">
-            {thisData.vulnerability}
-          </div>
-        </div>
-        
-        {/* Weight (upper right, black text on yellow square) */}
-        <div className="absolute top-0 right-0">
-          <div className="bg-[#FFFF44] text-black text-xs font-bold px-1 rounded">
-            {thisData.weight}
-          </div>
-        </div>
-        
-        {/* Base price (bottom center, black text on gold square) */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-          <div className="bg-[#FFD700] text-black text-xs font-bold px-1 rounded">
-            {sideData.base_price}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Function to render weapon chit
-  const renderWeaponChit = (item: Item, side: 'unalerted' | 'alerted') => {
-    const sideData = item.attributeBlocks[side];
-    const thisData = item.attributeBlocks.this;
-    const backgroundColor = getChitColor(sideData.chit_color);
-
-    return (
-      <div 
-        key={`${item.id}-${side}`}
-        className="relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1"
-        style={{ backgroundColor }}
-      >
-        {/* Weight (upper left, black text on yellow square) */}
-        <div className="absolute top-0 left-0">
-          <div className="bg-[#FFFF44] text-black text-xs font-bold px-1 rounded">
-            {thisData.weight}
-          </div>
-        </div>
-        
-        {/* Length (upper right, black text on blue square) */}
-        <div className="absolute top-0 right-0">
-          <div className="bg-[#4444FF] text-white text-xs font-bold px-1 rounded">
-            {thisData.length}
-          </div>
-        </div>
-        
-        {/* Attack speed (bottom left, black text on green square) */}
-        <div className="absolute bottom-0 left-0">
-          <div className="bg-[#44FF44] text-black text-xs font-bold px-1 rounded">
-            {sideData.attack_speed}
-          </div>
-        </div>
-        
-        {/* Strength (bottom center, black text on red square) */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-          <div className="bg-[#FF0000] text-black text-xs font-bold px-1 rounded">
-            {sideData.strength}
-          </div>
-        </div>
-        
-        {/* Sharpness (bottom right, black text on purple square) */}
-        <div className="absolute bottom-0 right-0">
-          <div className="bg-[#FF44FF] text-black text-xs font-bold px-1 rounded">
-            {sideData.sharpness}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Function to render treasure chit (single side)
-  const renderTreasureChit = (item: Item) => {
-    const thisData = item.attributeBlocks.this;
-    const backgroundColor = getChitColor(thisData.chit_color || 'white');
-    const isGreat = item.name.toLowerCase().includes('great');
-    const isLarge = item.name.toLowerCase().includes('large');
-
-    return (
-      <div 
-        className={`relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1 ${
-          isGreat ? 'shadow-lg shadow-yellow-400' : ''
-        }`}
-        style={{ 
-          backgroundColor: isLarge ? '#FFD700' : backgroundColor 
-        }}
-      >
-        {/* Base price (center, black text on gold square) */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-[#FFD700] text-black text-xs font-bold px-1 rounded">
-            {thisData.base_price || '?'}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Function to render equipment tooltip
-  const renderEquipmentTooltip = (itemName: string) => {
-    const item = itemCache[itemName];
-    if (!item) return null;
-
-    const isArmor = item.attributeBlocks.intact && item.attributeBlocks.damaged;
-    const isWeapon = item.attributeBlocks.unalerted && item.attributeBlocks.alerted;
-    const isSpell = item.attributeBlocks.this?.spell;
-    const isTreasure = !isArmor && !isWeapon && !isSpell;
+  // Pre-fetch item data for all characters when inventories are loaded AND map is ready
+  // Skip if we already have pre-computed items loaded
+  useEffect(() => {
+    if (!characterInventories || !mapReady) return;
     
-
-
-    return (
-      <div className="absolute z-50 bg-[#fff8e1] border-2 border-[#bfa76a] rounded-lg p-3 shadow-lg min-w-48">
-        <div className="text-sm font-semibold text-[#6b3e26] font-serif mb-2 text-center">{item.name}</div>
-        
-        {isSpell && (
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-[#6b3e26] font-serif font-semibold">Type {item.attributeBlocks.this.spell}</span>
-              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.duration}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.magic_color || 'Any'}</span>
-              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.target || 'Self'}</span>
-            </div>
-            <div className="border-t border-[#bfa76a] pt-2 mt-2">
-              <div className="text-xs text-[#6b3e26] font-serif italic leading-relaxed">
-                {item.attributeBlocks.this.text || 'No description available'}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {isArmor && (
-          <div className="space-y-2">
-            <div className="text-xs text-[#6b3e26] font-serif">Armor Sides:</div>
-            <div className="flex justify-center space-x-2">
-              {renderArmorChit(item, 'intact')}
-              {renderArmorChit(item, 'damaged')}
-            </div>
-          </div>
-        )}
-        
-        {isWeapon && (
-          <div className="space-y-2">
-            <div className="text-xs text-[#6b3e26] font-serif">Weapon Sides:</div>
-            <div className="flex justify-center space-x-2">
-              {renderWeaponChit(item, 'unalerted')}
-              {renderWeaponChit(item, 'alerted')}
-            </div>
-          </div>
-        )}
-        
-        {isTreasure && (
-          <div className="space-y-2">
-            <div className="text-xs text-[#6b3e26] font-serif">Treasure:</div>
-            <div className="flex justify-center">
-              {renderTreasureChit(item)}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Function to render text with item tooltips
-  const renderTextWithItems = (text: string) => {
-    // Common item names to look for
-    const itemNames = [
-      // Weapons
-      'Broadsword', 'Short Sword', 'Thrusting Sword', 'Great Sword', 'Axe', 'Great Axe', 
-      'Spear', 'Mace', 'Morning Star', 'Staff', 'Crossbow', 'Light Bow', 'Medium Bow', 'Halberd',
-      // Armor
-      'Helmet', 'Breastplate', 'Shield', 'Armor', 'Cap', 'Cloak', 'Cuirass', 'Buckler',
-      // Treasures
-      'Gold', 'Silver', 'Jewel', 'Gem', 'Ring', 'Amulet', 'Crown', 'Scepter', 'Chalice',
-      'Great', 'Large' // These will be combined with other words
-    ];
-
-    // Create a regex pattern to match item names
-    const itemPattern = new RegExp(`\\b(${itemNames.join('|')})\\b`, 'gi');
+    // If we already have a substantial item cache (pre-computed items), skip individual fetching
+    const itemCacheSize = Object.keys(itemCache).length;
+    if (itemCacheSize > 10) {
+      console.log('SessionPage: Using pre-computed items, skipping individual item fetching');
+      return;
+    }
     
-    const parts = text.split(itemPattern);
-    
-    return parts.map((part, index) => {
-      if (itemNames.some(name => name.toLowerCase() === part.toLowerCase())) {
-        return (
-          <span key={index} className="relative group">
-            <span 
-              className="text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
-              onMouseEnter={() => fetchItem(part)}
-            >
-              {part}
-            </span>
-            <div className="absolute left-0 top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              {renderEquipmentTooltip(part)}
-            </div>
-          </span>
-        );
-      }
-      return part;
-    });
-  };
-
-  // Calculate statistics from the data
-  const calculateStatistics = (data: SessionData) => {
-    let totalCharacterTurns = 0;
-    let totalBattles = 0;
-    let totalActions = 0;
-    const uniqueCharacters = new Set<string>();
-
-    Object.values(data.days).forEach(dayData => {
-      totalCharacterTurns += dayData.characterTurns.length;
-      totalBattles += dayData.battles.length;
+    const fetchAllItemData = async () => {
+      const allItems = new Set<string>();
       
-      dayData.characterTurns.forEach(turn => {
-        // Only count actual characters, not natives (HQ characters)
-        if (!turn.character.includes('HQ')) {
-          uniqueCharacters.add(turn.character);
+      // Collect all unique item names from all characters
+      Object.values(characterInventories).forEach((charData: any) => {
+        if (charData?.items) {
+          const itemArrays = [
+            charData.items.weapons,
+            charData.items.armor,
+            charData.items.treasures,
+            charData.items.great_treasures,
+            charData.items.spells,
+            charData.items.natives,
+            charData.items.other,
+            charData.items.unknown
+          ];
+          
+          itemArrays.flat().filter(Boolean).forEach((item: any) => {
+            if (item?.name) {
+              allItems.add(item.name);
+            }
+          });
         }
-        totalActions += turn.actions.length;
       });
-    });
-
-    return {
-      totalCharacterTurns,
-      totalBattles,
-      totalActions,
-      uniqueCharacters: uniqueCharacters.size,
-      players: Object.keys(data.players).length
-    };
-  };
-
-  // Filter out empty days and get sorted days
-  const getFilteredDays = (data: SessionData) => {
-    return Object.entries(data.days)
-      .filter(([dayKey, dayData]) => {
-        // Remove days with no character turns, no battles, and no monster spawns
-        return dayData.characterTurns.length > 0 || 
-               dayData.battles.length > 0 || 
-               dayData.monsterSpawns.length > 0;
-      })
-      .sort(([a], [b]) => {
-        const [am, ad] = a.split('_').map(Number);
-        const [bm, bd] = b.split('_').map(Number);
-        return am !== bm ? am - bm : ad - bd;
-      });
-  };
-
-  const addSkulls = (text: string) => {
-    return text.replace(/([^☠]*?)(was killed!?)/g, '☠ $1 ☠');
-  };
-
-  const formatAction = (action: Action) => {
-    const formattedAction = addSkulls(action.action);
-    return (
-      <div key={`${action.performer}-${action.action}`} className="mb-1">
-        <span className="font-semibold text-amber-600">{action.performer}:</span>{' '}
-        <span className="text-gray-700">{renderTextWithItems(formattedAction)}</span>
-      </div>
-    );
-  };
-
-  const renderCombatRound = (round: CombatRound) => {
-    const hasContent = round.actions.length > 0 || round.attacks.length > 0 || 
-                      round.damage.length > 0 || round.deaths.length > 0 ||
-                      round.fameGains.length > 0 || round.spellCasting.length > 0 ||
-                      round.fatigue.length > 0 || round.disengagement.length > 0;
-
-    if (!hasContent) return null;
-
-    return (
-      <div key={round.round} className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
-        <h4 className="font-bold text-amber-800 mb-2">Round {round.round}</h4>
-        
-        {round.actions.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-amber-700 mb-1">Actions:</h5>
-            {round.actions.map(formatAction)}
-          </div>
-        )}
-
-        {round.attacks.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-amber-700 mb-1">Attacks:</h5>
-            {round.attacks.map((attack, index) => (
-              <div key={index} className="text-sm text-gray-600 mb-1">{renderTextWithItems(attack)}</div>
-            ))}
-          </div>
-        )}
-
-        {round.damage.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-red-700 mb-1">Damage:</h5>
-            {round.damage.map((damage, index) => (
-              <div key={index} className="text-sm text-red-600 mb-1">{renderTextWithItems(addSkulls(damage))}</div>
-            ))}
-          </div>
-        )}
-
-        {round.armorDestruction.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-orange-700 mb-1">Armor:</h5>
-            {round.armorDestruction.map((armor, index) => (
-              <div key={index} className="text-sm text-orange-600 mb-1">{renderTextWithItems(armor)}</div>
-            ))}
-          </div>
-        )}
-
-        {round.deaths.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-red-800 mb-1">Deaths:</h5>
-            {round.deaths.map((death, index) => (
-              <div key={index} className="text-sm text-red-700 mb-1 font-bold">{addSkulls(death)}</div>
-            ))}
-          </div>
-        )}
-
-        {round.fameGains.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-green-700 mb-1">Fame & Notoriety:</h5>
-            {round.fameGains.map(formatAction)}
-          </div>
-        )}
-
-        {round.spellCasting.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-purple-700 mb-1">Spells:</h5>
-            {round.spellCasting.map(formatAction)}
-          </div>
-        )}
-
-        {round.fatigue.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-blue-700 mb-1">Fatigue:</h5>
-            {round.fatigue.map(formatAction)}
-          </div>
-        )}
-
-        {round.disengagement.length > 0 && (
-          <div className="mb-3">
-            <h5 className="font-semibold text-gray-700 mb-1">Disengagement:</h5>
-            {round.disengagement.map(formatAction)}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderCombat = (combat: Combat, combatIndex: number) => {
-    const meaningfulRounds = combat.rounds.filter(round => {
-      return round.actions.length > 0 || round.attacks.length > 0 || 
-             round.damage.length > 0 || round.deaths.length > 0 ||
-             round.fameGains.length > 0 || round.spellCasting.length > 0 ||
-             round.fatigue.length > 0 || round.disengagement.length > 0;
-    });
-
-    if (meaningfulRounds.length === 0) return null;
-
-    return (
-      <div key={`${combat.location}-${combatIndex}`} className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-        <h3 className="text-lg font-bold text-red-800 mb-3">
-          ⚔️ Battle at {combat.location}
-        </h3>
-        {combat.participants.length > 0 && (
-          <div className="mb-3 text-sm text-red-700">
-            <span className="font-semibold">Participants:</span> {combat.participants.join(', ')}
-          </div>
-        )}
-        {meaningfulRounds.map(renderCombatRound)}
-      </div>
-    );
-  };
-
-  // Helper function to check if combat has meaningful actions
-  const hasMeaningfulCombat = (dayData: DayData) => {
-    if (!dayData.battles || dayData.battles.length === 0) return false;
-    
-    return dayData.battles.some(battle => {
-      // Check if any round has meaningful actions beyond just END
-      return battle.rounds.some(round => {
-        const hasNonEndActions = round.actions.some(action => 
-          !action.action.includes('Presses the END combat button') &&
-          !action.action.includes('END combat')
+      
+      // Pre-fetch data for all items in batches for better performance
+      const itemArray = Array.from(allItems);
+      const batchSize = 5; // Process 5 items at a time
+      
+      for (let i = 0; i < itemArray.length; i += batchSize) {
+        const batch = itemArray.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(itemName => {
+            if (!itemCache[itemName]) {
+              return fetchItem(itemName);
+            }
+            return Promise.resolve(null);
+          })
         );
-        const hasAttacks = round.attacks && round.attacks.length > 0;
-        const hasDamage = round.damage && round.damage.length > 0;
-        const hasDeaths = round.deaths && round.deaths.length > 0;
-        const hasFameGains = round.fameGains && round.fameGains.length > 0;
-        const hasSpellCasting = round.spellCasting && round.spellCasting.length > 0;
-        const hasFatigue = round.fatigue && round.fatigue.length > 0;
-        const hasDisengagement = round.disengagement && round.disengagement.length > 0;
         
-        return hasNonEndActions || hasAttacks || hasDamage || hasDeaths || 
-               hasFameGains || hasSpellCasting || hasFatigue || hasDisengagement;
-      });
-    });
-  };
-
-  // Calendar component
-  const renderCalendar = () => {
-    if (!sessionData) return null;
-    
-    const dayKeys = Object.keys(sessionData.days).sort((a, b) => {
-      const [am, ad] = a.split('_').map(Number);
-      const [bm, bd] = b.split('_').map(Number);
-      return am !== bm ? am - bm : ad - bd;
-    });
-    
-    // Group days by month
-    const months: { [key: number]: string[] } = {};
-    dayKeys.forEach(dayKey => {
-      const [month] = dayKey.split('_').map(Number);
-      if (!months[month]) months[month] = [];
-      months[month].push(dayKey);
-    });
-    
-    const sortedMonths = Object.keys(months).map(Number).sort((a, b) => a - b);
-    const currentMonthDays = months[selectedMonth] || [];
-    
-    const goToPreviousMonth = () => {
-      const currentIndex = sortedMonths.indexOf(selectedMonth);
-      if (currentIndex > 0) {
-        setSelectedMonth(sortedMonths[currentIndex - 1]);
-      }
-    };
-    
-    const goToNextMonth = () => {
-      const currentIndex = sortedMonths.indexOf(selectedMonth);
-      if (currentIndex < sortedMonths.length - 1) {
-        setSelectedMonth(sortedMonths[currentIndex + 1]);
-      }
-    };
-
-    // Day navigation functions
-    const goToPreviousDay = () => {
-      const currentIndex = dayKeys.indexOf(selectedDay);
-      if (currentIndex > 0) {
-        setSelectedDay(dayKeys[currentIndex - 1]);
-        const [month] = dayKeys[currentIndex - 1].split('_').map(Number);
-        setSelectedMonth(month);
-      }
-    };
-
-    const goToNextDay = () => {
-      const currentIndex = dayKeys.indexOf(selectedDay);
-      if (currentIndex < dayKeys.length - 1) {
-        setSelectedDay(dayKeys[currentIndex + 1]);
-        const [month] = dayKeys[currentIndex + 1].split('_').map(Number);
-        setSelectedMonth(month);
-      }
-    };
-
-    const goToFirstDay = () => {
-      if (dayKeys.length > 0) {
-        setSelectedDay(dayKeys[0]);
-        const [month] = dayKeys[0].split('_').map(Number);
-        setSelectedMonth(month);
-      }
-    };
-
-    const goToLastDay = () => {
-      if (dayKeys.length > 0) {
-        setSelectedDay(dayKeys[dayKeys.length - 1]);
-        const [month] = dayKeys[dayKeys.length - 1].split('_').map(Number);
-        setSelectedMonth(month);
-      }
-    };
-
-    const toggleAutoAdvance = () => {
-      if (!isAutoAdvancing) {
-        // Starting auto-advance
-        const currentIndex = dayKeys.indexOf(selectedDay);
-        if (currentIndex === dayKeys.length - 1) {
-          // We're on the last day, jump to day 1 and start
-          setSelectedDay(dayKeys[0]);
-          const [month] = dayKeys[0].split('_').map(Number);
-          setSelectedMonth(month);
+        // Small delay between batches to prevent overwhelming the server
+        if (i + batchSize < itemArray.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
-        setIsAutoAdvancing(true);
-      } else {
-        // Stopping auto-advance
-        setIsAutoAdvancing(false);
       }
     };
     
-    return (
-      <div className="mb-6 p-4 bg-white border-2 border-amber-300 rounded-lg shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={goToPreviousMonth}
-            disabled={sortedMonths.indexOf(selectedMonth) === 0}
-            className="p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h3 className="text-lg font-bold text-amber-800">📅 Month {selectedMonth}</h3>
-          <button
-            onClick={goToNextMonth}
-            disabled={sortedMonths.indexOf(selectedMonth) === sortedMonths.length - 1}
-            className="p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1 mb-6 sm:gap-2">
-          {currentMonthDays.map(dayKey => {
-            const [, day] = dayKey.split('_').map(Number);
-            const dayData = sessionData.days[dayKey];
-            const hasMeaningfulCombatAction = hasMeaningfulCombat(dayData);
-            const hasActions = dayData.characterTurns && dayData.characterTurns.length > 0;
-            
-            return (
-              <button
-                key={dayKey}
-                onClick={() => setSelectedDay(dayKey)}
-                className={`
-                  p-1 sm:p-2 text-xs sm:text-sm font-medium rounded border transition-colors
-                  ${selectedDay === dayKey 
-                    ? 'bg-amber-500 text-white border-amber-600' 
-                    : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-                  }
-                  ${hasMeaningfulCombatAction ? 'ring-2 ring-red-400' : ''}
-                  ${hasActions ? 'font-bold' : 'font-normal'}
-                `}
-                title={`Month ${selectedMonth}, Day ${day}${hasMeaningfulCombatAction ? ' - Combat!' : ''}${hasActions ? ' - Actions' : ''}`}
-              >
-                {day}
-                {hasMeaningfulCombatAction && <span className="block text-xs">⚔️</span>}
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Day Navigation Arrows */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-2 sm:space-y-0">
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <button
-              onClick={goToFirstDay}
-              disabled={dayKeys.indexOf(selectedDay) === 0}
-              className="p-1 sm:p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-              title="Go to first day"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={goToPreviousDay}
-              disabled={dayKeys.indexOf(selectedDay) === 0}
-              className="p-1 sm:p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-              title="Previous day"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="text-xs sm:text-sm font-medium text-amber-800 mb-1 sm:mb-2">
-              Day {dayKeys.indexOf(selectedDay) + 1} of {dayKeys.length}
-            </div>
-            <button
-              onClick={toggleAutoAdvance}
-              disabled={dayKeys.indexOf(selectedDay) === dayKeys.length - 1}
-              className={`p-1 sm:p-2 rounded-full transition-colors ${
-                isAutoAdvancing 
-                  ? 'bg-red-500 hover:bg-red-600 text-white' 
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-              title={isAutoAdvancing ? "Pause auto-advance" : "Play auto-advance (3s delay)"}
-            >
-              {isAutoAdvancing ? (
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                </svg>
-              ) : (
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              )}
-            </button>
-          </div>
-          
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <button
-              onClick={goToNextDay}
-              disabled={dayKeys.indexOf(selectedDay) === dayKeys.length - 1}
-              className="p-1 sm:p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-              title="Next day"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={goToLastDay}
-              disabled={dayKeys.indexOf(selectedDay) === dayKeys.length - 1}
-              className="p-1 sm:p-2 text-amber-600 hover:text-amber-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-              title="Go to last day"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7m-8 0l7-7-7-7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        
-        {/* Day Log integrated in the same panel */}
-        {sessionData.days[selectedDay] && (
-          <div className="border-t border-amber-200 pt-4">
-            {renderDay(selectedDay, sessionData.days[selectedDay])}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderDay = (dayKey: string, dayData: DayData) => {
-    const dayNumber = dayKey.replace('day_', '').replace('.txt', '');
-    const [month, day] = dayNumber.split('_');
-    
-    return (
-      <div key={dayKey}>
-        <h2 className="text-xl font-bold text-amber-800 mb-4">
-          Month {month}, Day {day}
-          {dayData.monsterDieRoll && (
-            <span className="ml-4 text-lg text-gray-600">
-              🎲 Monster Die: {dayData.monsterDieRoll}
-            </span>
-          )}
-        </h2>
-
-        {/* Character Turns */}
-        {dayData.characterTurns.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-amber-700 mb-3">👥 Character Actions</h3>
-            {dayData.characterTurns.map((turn, index) => (
-              <div key={index} className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
-                <h4 className="font-bold text-amber-800 mb-2">
-                  {turn.character} ({turn.player})
-                </h4>
-                <div className="text-sm text-gray-600 mb-2">
-                  <span className="font-semibold">Start:</span> {turn.startLocation} | 
-                  <span className="font-semibold ml-2">End:</span> {turn.endLocation}
-                </div>
-                {turn.actions.length > 0 && (
-                  <div>
-                    <h5 className="font-semibold text-amber-700 mb-1">Actions:</h5>
-                    {(() => {
-                      let blockedFound = false;
-                      let hideSucceeded = false;
-                      return turn.actions.map((action, actionIndex) => {
-                        if (blockedFound) return null;
-                        // BLOCKED logic
-                        if (action.action === 'BLOCKED' && action.result && action.result.startsWith('Cannot perform action')) {
-                          const actionType = getBlockedActionType(action.result);
-                          blockedFound = true;
-                          return (
-                            <div key={actionIndex} className="text-sm text-gray-700 mb-1">
-                              <span className="font-medium">{actionType}</span>
-                              <span className="text-red-600 font-semibold"> - Blocked</span>
-                            </div>
-                          );
-                        }
-                        // Hide logic
-                        if (action.action === 'Hide') {
-                          if (action.result === 'N/A') return null;
-                          if (hideSucceeded) return null;
-                          if (action.result === 'Succeeded') {
-                            hideSucceeded = true;
-                            return (
-                              <div key={actionIndex} className="text-sm text-gray-700 mb-1">
-                                <span className="font-medium">{renderTextWithItems(action.action)}</span>
-                                <span className="text-green-600 font-semibold"> - {renderTextWithItems(action.result)}</span>
-                              </div>
-                            );
-                          }
-                        }
-                        return (
-                          <div key={actionIndex} className="text-sm text-gray-700 mb-1">
-                            <span className="font-medium">{renderTextWithItems(action.action)}</span>
-                            {action.result && (
-                              <span className="text-gray-500"> - {renderTextWithItems(action.result)}</span>
-                            )}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Monster Spawns */}
-        {dayData.monsterSpawns.length > 0 && (
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-700 mb-2">🐉 Monster Spawns:</h4>
-            {dayData.monsterSpawns.map((spawn, index) => (
-              <div key={index} className="text-sm text-gray-600">
-                {spawn.monster} → {spawn.location}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Combat */}
-        {hasMeaningfulCombat(dayData) && (
-          <div>
-            <h3 className="text-xl font-bold text-red-700 mb-3">⚔️ Combat</h3>
-            {dayData.battles
-              .filter(combat => {
-                // Filter out combats that only have END actions
-                return combat.rounds.some(round => {
-                  const hasNonEndActions = round.actions.some(action => 
-                    !action.action.includes('Presses the END combat button') &&
-                    !action.action.includes('END combat')
-                  );
-                  const hasAttacks = round.attacks && round.attacks.length > 0;
-                  const hasDamage = round.damage && round.damage.length > 0;
-                  const hasDeaths = round.deaths && round.deaths.length > 0;
-                  const hasFameGains = round.fameGains && round.fameGains.length > 0;
-                  const hasSpellCasting = round.spellCasting && round.spellCasting.length > 0;
-                  const hasFatigue = round.fatigue && round.fatigue.length > 0;
-                  const hasDisengagement = round.disengagement && round.disengagement.length > 0;
-                  
-                  return hasNonEndActions || hasAttacks || hasDamage || hasDeaths || 
-                         hasFameGains || hasSpellCasting || hasFatigue || hasDisengagement;
-                });
-              })
-              .map((combat, index) => renderCombat(combat, index))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Function to get character icon path
-  const getCharacterIconPath = (characterName: string) => {
-    const iconName = characterName + '_symbol.png';
-    return `/images/charsymbol/${iconName}`;
-  };
-
-  // Function to render treasure bag icon
-  const renderTreasureBagIcon = () => (
-    <span className="inline-block w-4 h-4 mr-1" title="Treasure">
-      💰
-    </span>
-  );
-
-  // Function to render great treasure with golden bubble
-  const renderGreatTreasure = (itemName: string) => (
-    <span className="inline-block bg-yellow-400 text-black font-bold px-2 py-1 rounded-full text-xs mr-2 mb-1">
-      {itemName.toUpperCase()}
-    </span>
-  );
-
-  // Function to render native chit (simplified version)
-  const renderNativeChit = (nativeName: string) => {
-    return (
-      <div className="inline-block relative w-12 h-12 border-2 border-[#6b3e26] rounded-md bg-white mr-2 mb-1">
-        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#6b3e26]">
-          {nativeName.split(' ')[0]}
-        </div>
-      </div>
-    );
-  };
-
-  // Function to categorize items based on name
-  const categorizeItemByName = (itemName: string): string => {
-    const name = itemName.toLowerCase();
-    
-    // Weapons
-    if (name.includes('bow') || name.includes('sword') || name.includes('axe') || 
-        name.includes('spear') || name.includes('mace') || name.includes('staff') ||
-        name.includes('crossbow') || name.includes('halberd') || name.includes('broadsword') ||
-        name.includes('great sword') || name.includes('great axe') || name.includes('morning star') ||
-        name.includes('thrusting sword') || name.includes('short sword')) {
-      return 'weapon';
-    }
-    
-    // Armor
-    if (name.includes('armor') || name.includes('shield') || name.includes('helmet') ||
-        name.includes('breastplate') || name.includes('greaves') || name.includes('gauntlets')) {
-      return 'armor';
-    }
-    
-    // Spells
-    if (name.includes('peace with nature') || name.includes('type vii') || name.includes('type vi') ||
-        name.includes('type v') || name.includes('type iv') || name.includes('type iii') ||
-        name.includes('type ii') || name.includes('type i')) {
-      return 'spell';
-    }
-    
-    // Great Treasures
-    if (name.includes('great') && (name.includes('treasure') || name.includes('sword') || 
-        name.includes('axe') || name.includes('armor'))) {
-      return 'great_treasure';
-    }
-    
-    // Regular Treasures
-    if (name.includes('treasure') || name.includes('gold') || name.includes('jewel') ||
-        name.includes('gem') || name.includes('coin')) {
-      return 'treasure';
-    }
-    
-    // Natives
-    if (name.includes('native') || name.includes('guard') || name.includes('mercenary') ||
-        name.includes('lancer') || name.includes('dwarf') || name.includes('elf')) {
-      return 'native';
-    }
-    
-    return 'other';
-  };
+    fetchAllItemData();
+  }, [characterInventories, mapReady, itemCache]);
 
   // Fetch character data and stats on hover
   useEffect(() => {
@@ -1205,46 +394,13 @@ export default function Page({ params }: { params: { id: string } }) {
     return () => { cancelled = true; };
   }, [hoveredCharacter]);
 
-  // Pre-fetch item data for all characters when inventories are loaded
-  useEffect(() => {
-    if (!characterInventories) return;
-    
-    const fetchAllItemData = async () => {
-      const allItems = new Set<string>();
-      
-      // Collect all unique item names from all characters
-      Object.values(characterInventories).forEach((charData: any) => {
-        if (charData?.items) {
-          const itemArrays = [
-            charData.items.weapons,
-            charData.items.armor,
-            charData.items.treasures,
-            charData.items.great_treasures,
-            charData.items.spells,
-            charData.items.natives,
-            charData.items.other,
-            charData.items.unknown
-          ];
-          
-          itemArrays.flat().filter(Boolean).forEach((item: any) => {
-            if (item?.name) {
-              allItems.add(item.name);
-            }
-          });
-        }
-      });
-      
-      // Pre-fetch data for all items
-      for (const itemName of Array.from(allItems)) {
-        if (!itemCache[itemName]) {
-          await fetchItem(itemName);
-        }
-      }
-    };
-    
-    fetchAllItemData();
-  }, [characterInventories, itemCache]);
+  // Helper function to get character icon path
+  const getCharacterIconPath = (characterName: string) => {
+    const iconName = characterName + '_symbol.png';
+    return `/images/charsymbol/${iconName}`;
+  };
 
+  // Helper function to render character box
   const renderCharacterBox = (characterName: string, playerName: string) => {
     const inventory = characterInventories?.[characterName]?.items;
     const isDead = deadCharacters.has(characterName);
@@ -1463,7 +619,541 @@ export default function Page({ params }: { params: { id: string } }) {
     );
   };
 
-  // Extract character icon overlay data
+  // Helper function to categorize items based on name
+  const categorizeItemByName = (itemName: string): string => {
+    const name = itemName.toLowerCase();
+    
+    // Weapons
+    if (name.includes('bow') || name.includes('sword') || name.includes('axe') || 
+        name.includes('spear') || name.includes('mace') || name.includes('staff') ||
+        name.includes('crossbow') || name.includes('halberd') || name.includes('broadsword') ||
+        name.includes('great sword') || name.includes('great axe') || name.includes('morning star') ||
+        name.includes('thrusting sword') || name.includes('short sword')) {
+      return 'weapon';
+    }
+    
+    // Armor
+    if (name.includes('armor') || name.includes('shield') || name.includes('helmet') ||
+        name.includes('breastplate') || name.includes('greaves') || name.includes('gauntlets')) {
+      return 'armor';
+    }
+    
+    // Spells
+    if (name.includes('peace with nature') || name.includes('type vii') || name.includes('type vi') ||
+        name.includes('type v') || name.includes('type iv') || name.includes('type iii') ||
+        name.includes('type ii') || name.includes('type i')) {
+      return 'spell';
+    }
+    
+    // Great Treasures
+    if (name.includes('great') && (name.includes('treasure') || name.includes('sword') || 
+        name.includes('axe') || name.includes('armor'))) {
+      return 'great_treasure';
+    }
+    
+    // Regular Treasures
+    if (name.includes('treasure') || name.includes('gold') || name.includes('jewel') ||
+        name.includes('gem') || name.includes('coin')) {
+      return 'treasure';
+    }
+    
+    // Natives
+    if (name.includes('native') || name.includes('guard') || name.includes('mercenary') ||
+        name.includes('lancer') || name.includes('dwarf') || name.includes('elf')) {
+      return 'native';
+    }
+    
+    return 'other';
+  };
+
+  // Helper function to render treasure bag icon
+  const renderTreasureBagIcon = () => (
+    <span className="inline-block w-4 h-4 mr-1" title="Treasure">
+      💰
+    </span>
+  );
+
+  // Helper function to render equipment tooltip
+  const renderEquipmentTooltip = (itemName: string) => {
+    const item = itemCache[itemName];
+    if (!item) return null;
+
+    const isArmor = item.attributeBlocks.intact && item.attributeBlocks.damaged;
+    const isWeapon = item.attributeBlocks.unalerted && item.attributeBlocks.alerted;
+    const isSpell = item.attributeBlocks.this?.spell;
+    const isTreasure = !isArmor && !isWeapon && !isSpell;
+    
+    return (
+      <div className="absolute z-50 bg-[#fff8e1] border-2 border-[#bfa76a] rounded-lg p-3 shadow-lg min-w-48">
+        <div className="text-sm font-semibold text-[#6b3e26] font-serif mb-2 text-center">{item.name}</div>
+        
+        {isSpell && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[#6b3e26] font-serif font-semibold">Type {item.attributeBlocks.this.spell}</span>
+              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.duration}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.magic_color || 'Any'}</span>
+              <span className="text-[#6b3e26] font-serif capitalize">{item.attributeBlocks.this.target || 'Self'}</span>
+            </div>
+            <div className="border-t border-[#bfa76a] pt-2 mt-2">
+              <div className="text-xs text-[#6b3e26] font-serif italic leading-relaxed">
+                {item.attributeBlocks.this.text || 'No description available'}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {isArmor && (
+          <div className="space-y-2">
+            <div className="text-xs text-[#6b3e26] font-serif">Armor Sides:</div>
+            <div className="flex justify-center space-x-2">
+              {renderArmorChit(item, 'intact')}
+              {renderArmorChit(item, 'damaged')}
+            </div>
+          </div>
+        )}
+        
+        {isWeapon && (
+          <div className="space-y-2">
+            <div className="text-xs text-[#6b3e26] font-serif">Weapon Sides:</div>
+            <div className="flex justify-center space-x-2">
+              {renderWeaponChit(item, 'unalerted')}
+              {renderWeaponChit(item, 'alerted')}
+            </div>
+          </div>
+        )}
+        
+        {isTreasure && (
+          <div className="space-y-2">
+            <div className="text-xs text-[#6b3e26] font-serif">Treasure:</div>
+            <div className="flex justify-center">
+              {renderTreasureChit(item)}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper function to render armor chit
+  const renderArmorChit = (item: Item, side: 'intact' | 'damaged') => {
+    const sideData = item.attributeBlocks[side];
+    const thisData = item.attributeBlocks.this;
+    const backgroundColor = getChitColor(sideData.chit_color);
+
+    return (
+      <div 
+        key={`${item.id}-${side}`}
+        className="relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1"
+        style={{ backgroundColor }}
+      >
+        {/* Vulnerability (upper left, black text on white square) */}
+        <div className="absolute top-0 left-0">
+          <div className="bg-white text-black text-xs font-bold px-1 rounded">
+            {thisData.vulnerability}
+          </div>
+        </div>
+        
+        {/* Weight (upper right, black text on yellow square) */}
+        <div className="absolute top-0 right-0">
+          <div className="bg-[#FFFF44] text-black text-xs font-bold px-1 rounded">
+            {thisData.weight}
+          </div>
+        </div>
+        
+        {/* Base price (bottom center, black text on gold square) */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+          <div className="bg-[#FFD700] text-black text-xs font-bold px-1 rounded">
+            {sideData.base_price}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to render weapon chit
+  const renderWeaponChit = (item: Item, side: 'unalerted' | 'alerted') => {
+    const sideData = item.attributeBlocks[side];
+    const thisData = item.attributeBlocks.this;
+    const backgroundColor = getChitColor(sideData.chit_color);
+
+    return (
+      <div 
+        key={`${item.id}-${side}`}
+        className="relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1"
+        style={{ backgroundColor }}
+      >
+        {/* Weight (upper left, black text on yellow square) */}
+        <div className="absolute top-0 left-0">
+          <div className="bg-[#FFFF44] text-black text-xs font-bold px-1 rounded">
+            {thisData.weight}
+          </div>
+        </div>
+        
+        {/* Length (upper right, black text on blue square) */}
+        <div className="absolute top-0 right-0">
+          <div className="bg-[#4444FF] text-white text-xs font-bold px-1 rounded">
+            {thisData.length}
+          </div>
+        </div>
+        
+        {/* Attack speed (bottom left, black text on green square) */}
+        <div className="absolute bottom-0 left-0">
+          <div className="bg-[#44FF44] text-black text-xs font-bold px-1 rounded">
+            {sideData.attack_speed}
+          </div>
+        </div>
+        
+        {/* Strength (bottom center, black text on red square) */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+          <div className="bg-[#FF0000] text-black text-xs font-bold px-1 rounded">
+            {sideData.strength}
+          </div>
+        </div>
+        
+        {/* Sharpness (bottom right, black text on purple square) */}
+        <div className="absolute bottom-0 right-0">
+          <div className="bg-[#FF44FF] text-black text-xs font-bold px-1 rounded">
+            {sideData.sharpness}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to render treasure chit (single side)
+  const renderTreasureChit = (item: Item) => {
+    const thisData = item.attributeBlocks.this;
+    const backgroundColor = getChitColor(thisData.chit_color || 'white');
+    const isGreat = item.name.toLowerCase().includes('great');
+    const isLarge = item.name.toLowerCase().includes('large');
+
+    return (
+      <div 
+        className={`relative w-16 h-16 border-2 border-[#6b3e26] rounded-md flex flex-col justify-between p-1 ${
+          isGreat ? 'shadow-lg shadow-yellow-400' : ''
+        }`}
+        style={{ 
+          backgroundColor: isLarge ? '#FFD700' : backgroundColor 
+        }}
+      >
+        {/* Base price (center, black text on gold square) */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="bg-[#FFD700] text-black text-xs font-bold px-1 rounded">
+            {thisData.base_price || '?'}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Calculate statistics from the data
+  const calculateStatistics = (data: SessionData) => {
+    let totalCharacterTurns = 0;
+    let totalBattles = 0;
+    let totalActions = 0;
+    const uniqueCharacters = new Set<string>();
+
+    Object.values(data.days).forEach(dayData => {
+      totalCharacterTurns += dayData.characterTurns.length;
+      totalBattles += dayData.battles.length;
+      
+      dayData.characterTurns.forEach(turn => {
+        // Only count actual characters, not natives (HQ characters)
+        if (!turn.character.includes('HQ')) {
+          uniqueCharacters.add(turn.character);
+        }
+        totalActions += turn.actions.length;
+      });
+    });
+
+    return {
+      totalCharacterTurns,
+      totalBattles,
+      totalActions,
+      uniqueCharacters: uniqueCharacters.size,
+      players: Object.keys(data.players).length
+    };
+  };
+
+  // Helper function to get chit color as CSS color
+  const getChitColor = (colorName: string): string => {
+    const colorMap: { [key: string]: string } = {
+      'lightorange': '#FFB366',
+      'red': '#FF4444',
+      'blue': '#4444FF',
+      'green': '#44FF44',
+      'yellow': '#FFFF44',
+      'purple': '#FF44FF',
+      'brown': '#8B4513',
+      'grey': '#888888',
+      'gray': '#888888',
+      'white': '#FFFFFF',
+      'black': '#000000',
+      'lightgreen': '#90EE90',
+      'forestgreen': '#228B22'
+    };
+    return colorMap[colorName] || '#FFFFFF';
+  };
+
+  // Render calendar and day selection
+  const renderCalendar = () => {
+    if (!sessionData) return null;
+    
+    const dayKeys = Object.keys(sessionData.days).sort((a, b) => {
+      const [am, ad] = a.split('_').map(Number);
+      const [bm, bd] = b.split('_').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    });
+
+    return (
+      <div className="bg-white border-2 border-amber-300 rounded-lg shadow-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-amber-800">📅 Session Log</h2>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsAutoAdvancing(!isAutoAdvancing)}
+              className={`px-3 py-1 rounded text-sm font-medium ${
+                isAutoAdvancing 
+                  ? 'bg-red-500 text-white hover:bg-red-600' 
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`}
+            >
+              {isAutoAdvancing ? '⏸️ Stop' : '▶️ Auto'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Day Navigation */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {dayKeys.map((dayKey) => {
+            const [month, day] = dayKey.split('_').map(Number);
+            const isSelected = dayKey === selectedDay;
+            const dayData = sessionData.days[dayKey];
+            const hasContent = dayData.characterTurns.length > 0 || 
+                              dayData.battles.length > 0 || 
+                              dayData.monsterSpawns.length > 0;
+            
+            return (
+              <button
+                key={dayKey}
+                onClick={() => {
+                  setSelectedDay(dayKey);
+                  setSelectedMonth(month);
+                }}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-amber-500 text-white'
+                    : hasContent
+                    ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {month}/{day}
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* Selected Day Content */}
+        {selectedDay && sessionData.days[selectedDay] && (
+          <div className="max-h-96 overflow-y-auto">
+            {renderDay(selectedDay, sessionData.days[selectedDay])}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper functions for rendering
+  const addSkulls = (text: string) => {
+    return text.replace(/([^☠]*?)(was killed!?)/g, '☠ $1 ☠');
+  };
+
+  const formatAction = (action: Action) => {
+    const formattedAction = addSkulls(action.action);
+    return (
+      <div key={`${action.performer}-${action.action}`} className="mb-1">
+        <span className="font-semibold text-amber-600">{action.performer}:</span>{' '}
+        <span className="text-gray-700">{formattedAction}</span>
+      </div>
+    );
+  };
+
+  const renderCombatRound = (round: CombatRound) => {
+    const hasContent = round.actions.length > 0 || round.attacks.length > 0 || 
+                      round.damage.length > 0 || round.deaths.length > 0 ||
+                      round.fameGains.length > 0 || round.spellCasting.length > 0 ||
+                      round.fatigue.length > 0 || round.disengagement.length > 0;
+
+    if (!hasContent) return null;
+
+    return (
+      <div key={round.round} className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
+        <h4 className="font-bold text-amber-800 mb-2">Round {round.round}</h4>
+        
+        {round.actions.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-amber-700 mb-1">Actions:</h5>
+            {round.actions.map(formatAction)}
+          </div>
+        )}
+
+        {round.attacks.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-amber-700 mb-1">Attacks:</h5>
+            {round.attacks.map((attack, index) => (
+              <div key={index} className="text-sm text-gray-600 mb-1">{attack}</div>
+            ))}
+          </div>
+        )}
+
+        {round.damage.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-red-700 mb-1">Damage:</h5>
+            {round.damage.map((damage, index) => (
+              <div key={index} className="text-sm text-red-600 mb-1">{addSkulls(damage)}</div>
+            ))}
+          </div>
+        )}
+
+        {round.deaths.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-red-800 mb-1">Deaths:</h5>
+            {round.deaths.map((death, index) => (
+              <div key={index} className="text-sm text-red-700 mb-1 font-bold">{addSkulls(death)}</div>
+            ))}
+          </div>
+        )}
+
+        {round.fameGains.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-green-700 mb-1">Fame & Notoriety:</h5>
+            {round.fameGains.map(formatAction)}
+          </div>
+        )}
+
+        {round.spellCasting.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-purple-700 mb-1">Spells:</h5>
+            {round.spellCasting.map(formatAction)}
+          </div>
+        )}
+
+        {round.fatigue.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-blue-700 mb-1">Fatigue:</h5>
+            {round.fatigue.map(formatAction)}
+          </div>
+        )}
+
+        {round.disengagement.length > 0 && (
+          <div className="mb-3">
+            <h5 className="font-semibold text-gray-700 mb-1">Disengagement:</h5>
+            {round.disengagement.map(formatAction)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderCombat = (combat: Combat, combatIndex: number) => {
+    const meaningfulRounds = combat.rounds.filter(round => {
+      return round.actions.length > 0 || round.attacks.length > 0 || 
+             round.damage.length > 0 || round.deaths.length > 0 ||
+             round.fameGains.length > 0 || round.spellCasting.length > 0 ||
+             round.fatigue.length > 0 || round.disengagement.length > 0;
+    });
+
+    if (meaningfulRounds.length === 0) return null;
+
+    return (
+      <div key={`${combat.location}-${combatIndex}`} className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+        <h3 className="text-lg font-bold text-red-800 mb-3">
+          ⚔️ Battle at {combat.location}
+        </h3>
+        {combat.participants.length > 0 && (
+          <div className="mb-3 text-sm text-red-700">
+            <span className="font-semibold">Participants:</span> {combat.participants.join(', ')}
+          </div>
+        )}
+        {meaningfulRounds.map(renderCombatRound)}
+      </div>
+    );
+  };
+
+  const renderDay = (dayKey: string, dayData: DayData) => {
+    const dayNumber = dayKey.replace('day_', '').replace('.txt', '');
+    const [month, day] = dayNumber.split('_');
+    
+    return (
+      <div key={dayKey}>
+        <h2 className="text-xl font-bold text-amber-800 mb-4">
+          Month {month}, Day {day}
+          {dayData.monsterDieRoll && (
+            <span className="ml-4 text-lg text-gray-600">
+              🎲 Monster Die: {dayData.monsterDieRoll}
+            </span>
+          )}
+        </h2>
+
+        {/* Character Turns */}
+        {dayData.characterTurns.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-amber-700 mb-3">👥 Character Actions</h3>
+            {dayData.characterTurns.map((turn, index) => (
+              <div key={index} className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                <h4 className="font-bold text-amber-800 mb-2">
+                  {turn.character} ({turn.player})
+                </h4>
+                <div className="text-sm text-gray-600 mb-2">
+                  <span className="font-semibold">Start:</span> {turn.startLocation} | 
+                  <span className="font-semibold ml-2">End:</span> {turn.endLocation}
+                </div>
+                {turn.actions.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-amber-700 mb-1">Actions:</h5>
+                    {turn.actions.map((action, actionIndex) => (
+                      <div key={actionIndex} className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{action.action}</span>
+                        {action.result && (
+                          <span className="text-gray-500"> - {action.result}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Monster Spawns */}
+        {dayData.monsterSpawns.length > 0 && (
+          <div className="mb-4">
+            <h4 className="font-semibold text-gray-700 mb-2">🐉 Monster Spawns:</h4>
+            {dayData.monsterSpawns.map((spawn, index) => (
+              <div key={index} className="text-sm text-gray-600">
+                {spawn.monster} → {spawn.location}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Combat */}
+        {dayData.battles.length > 0 && (
+          <div>
+            <h3 className="text-xl font-bold text-red-700 mb-3">⚔️ Combat</h3>
+            {dayData.battles.map((combat, index) => renderCombat(combat, index))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper function to render character icon overlay data
   const characterIcons = useMemo(() => {
     if (!sessionData) return [];
     // Find all unique characters
@@ -1589,7 +1279,12 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="bg-white border-2 border-amber-300 rounded-lg shadow-lg p-4 w-full">
             <h2 className="text-xl font-bold text-amber-800 mb-4">🗺️ Game Map</h2>
             <div className="aspect-square w-full overflow-hidden">
-              <SessionMap sessionId={sessionId} characterIcons={characterIcons} selectedDay={selectedDay} />
+              <SessionMap 
+                sessionId={sessionId} 
+                characterIcons={characterIcons} 
+                selectedDay={selectedDay}
+                onMapReady={() => setMapReady(true)}
+              />
             </div>
           </div>
         </div>

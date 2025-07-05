@@ -1,0 +1,144 @@
+{
+  "Light Bow": {
+    "id": "1998",
+    "name": "Light Bow",
+    "attributeBlocks": {
+      "this": {
+        "weight": "L",
+        "length": "14",
+        "base_price": "6",
+        "missile": "",
+        "two_handed": "",
+        "weapon": "",
+        "icon_type": "light_bow",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": "",
+        "bow": ""
+      },
+      "unalerted": {
+        "strength": "L",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "attack_speed": "1",
+        "strength": "L",
+        "sharpness": "2",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Peace with Nature": {
+    "id": "316",
+    "name": "Peace with Nature",
+    "attributeBlocks": {
+      "this": {
+        "spell": "VII",
+        "duration": "permanent",
+        "target": "leader",
+        "text": "Not attacked by warning or sound chits",
+        "magic_color": "gold",
+        "original_game": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "peace_with_nature": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Elven Slippers": {
+    "id": "334",
+    "name": "Elven Slippers",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "text": "MOVE L2",
+        "base_price": "5",
+        "notoriety": "2",
+        "move_speed": "2",
+        "strength": "L",
+        "original_game": "",
+        "boots": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Shielded Lantern": {
+    "id": "351",
+    "name": "Shielded Lantern",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "base_price": "8",
+        "weight": "L",
+        "text": "Extra phase in caves",
+        "original_game": "",
+        "extra_cave_phase": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Seven League Boots": {
+    "id": "327",
+    "name": "Seven League Boots",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "notoriety": "2",
+        "text": "MOVE T5, plus extra MOVE",
+        "base_price": "5",
+        "strength": "T",
+        "move_speed": "5",
+        "original_game": "",
+        "boots": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Warhorse": {
+    "id": "1915",
+    "name": "Warhorse",
+    "attributeBlocks": {
+      "this": {
+        "horse": "warhorse",
+        "vulnerability": "T",
+        "armored": "",
+        "base_price": "25",
+        "magic": "",
+        "item": "",
+        "super_realm": "",
+        "icon_folder": "wesnoth/units",
+        "icon_size": "1",
+        "icon_type": "royalBeast",
+        "horse_holder": "Chapel"
+      },
+      "trot": {
+        "move_speed": "5",
+        "strength": "T",
+        "chit_color": "tan"
+      },
+      "gallop": {
+        "move_speed": "3",
+        "strength": "T",
+        "chit_color": "tan"
+      }
+    },
+    "parts": []
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "Fiery Blast": {
+    "id": "291",
+    "name": "Fiery Blast",
+    "attributeBlocks": {
+      "this": {
+        "spell": "IV",
+        "duration": "attack",
+        "target": "multiple",
+        "text": "MISSILE attack on each target",
+        "magic_color": "purple",
+        "sharpness": "3",
+        "strength": "L",
+        "original_game": "",
+        "length": "13",
+        "missile": "magic",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "rw_expansion_1": "",
+        "table": "magicmissil",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Hurricane Winds": {
+    "id": "300",
+    "name": "Hurricane Winds",
+    "attributeBlocks": {
+      "this": {
+        "spell": "IV",
+        "duration": "move",
+        "target": "individual + hex",
+        "text": "Must FLY T1 one hex (mountain only)",
+        "magic_color": "purple",
+        "original_game": "",
+        "clearing_req": "M",
+        "blows_target": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Small Blessing": {
+    "id": "273",
+    "name": "Small Blessing",
+    "attributeBlocks": {
+      "this": {
+        "spell": "I",
+        "duration": "instant",
+        "target": "character",
+        "text": "Gets one WISH (roll)",
+        "magic_color": "white",
+        "original_game": "",
+        "wish": "",
+        "alt_monsters1_game": "",
+        "rw_expansion_1": "",
+        "table": "wish",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "See Hidden Signs": {
+    "id": "283",
+    "name": "See Hidden Signs",
+    "attributeBlocks": {
+      "this": {
+        "spell": "III",
+        "duration": "day",
+        "target": "character",
+        "text": "Extra SEARCH phase",
+        "magic_color": "gold",
+        "original_game": "",
+        "spell_extra_action": "S",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "upg_swap_out": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Blend Into Background": {
+    "id": "312",
+    "name": "Blend Into Background",
+    "attributeBlocks": {
+      "this": {
+        "spell": "II",
+        "duration": "day",
+        "target": "leader",
+        "text": "Extra HIDE phase",
+        "magic_color": "gray",
+        "original_game": "",
+        "spell_extra_action": "H",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "upg_swap_out": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Scroll of Alchemy": {
+    "id": "386",
+    "name": "Scroll of Alchemy",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "base_price": "10",
+        "weight": "L",
+        "fame": "-10",
+        "notoriety": "15",
+        "magic": "VI",
+        "great": "",
+        "original_game": "",
+        "book": "",
+        "print": "",
+        "alt_monsters1_game": "",
+        "scholar_price": "50",
+        "warlock_price": "50",
+        "facing": "face_dn",
+        "ts_section": "magic",
+        "ts_color": "lightgreen",
+        "rw_expansion_1": "",
+        "item": "",
+        "scroll": "",
+        "merchant_price": "20"
+      }
+    },
+    "parts": []
+  },
+  "Staff": {
+    "id": "2015",
+    "name": "Staff",
+    "attributeBlocks": {
+      "this": {
+        "weight": "L",
+        "length": "9",
+        "base_price": "1",
+        "two_handed": "",
+        "weapon": "",
+        "icon_type": "staff",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": ""
+      },
+      "unalerted": {
+        "strength": "L",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "strength": "L",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Elven Slippers": {
+    "id": "334",
+    "name": "Elven Slippers",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "text": "MOVE L2",
+        "base_price": "5",
+        "notoriety": "2",
+        "move_speed": "2",
+        "strength": "L",
+        "original_game": "",
+        "boots": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Hidden Ring": {
+    "id": "360",
+    "name": "Hidden Ring",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "large",
+        "base_price": "20",
+        "great": "",
+        "fame": "-10",
+        "notoriety": "10",
+        "magic": "VI",
+        "original_game": "",
+        "artifact": "",
+        "print": "",
+        "alt_monsters1_game": "",
+        "scholar_price": "20",
+        "facing": "face_dn",
+        "ts_section": "magic",
+        "ts_color": "lightgreen",
+        "rw_expansion_1": "",
+        "item": "",
+        "merchant_price": "20"
+      }
+    },
+    "parts": []
+  },
+  "Cloak of Mist": {
+    "id": "331",
+    "name": "Cloak of Mist",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "text": "Extra HIDE",
+        "base_price": "4",
+        "notoriety": "2",
+        "original_game": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  }
+}

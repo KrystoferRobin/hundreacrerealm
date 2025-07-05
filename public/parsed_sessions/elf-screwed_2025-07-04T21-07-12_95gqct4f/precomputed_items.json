@@ -1,0 +1,190 @@
+{
+  "Light Bow": {
+    "id": "1998",
+    "name": "Light Bow",
+    "attributeBlocks": {
+      "this": {
+        "weight": "L",
+        "length": "14",
+        "base_price": "6",
+        "missile": "",
+        "two_handed": "",
+        "weapon": "",
+        "icon_type": "light_bow",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": "",
+        "bow": ""
+      },
+      "unalerted": {
+        "strength": "L",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "attack_speed": "1",
+        "strength": "L",
+        "sharpness": "2",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Persuade": {
+    "id": "306",
+    "name": "Persuade",
+    "attributeBlocks": {
+      "this": {
+        "spell": "III",
+        "duration": "day",
+        "target": "human group",
+        "text": "Group becomes FRIENDLY (works on giants and ogres too)",
+        "magic_color": "gold",
+        "original_game": "",
+        "pacify": "1",
+        "host_okay": "",
+        "alt_monsters1_game": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Peace with Nature": {
+    "id": "316",
+    "name": "Peace with Nature",
+    "attributeBlocks": {
+      "this": {
+        "spell": "VII",
+        "duration": "permanent",
+        "target": "leader",
+        "text": "Not attacked by warning or sound chits",
+        "magic_color": "gold",
+        "original_game": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "peace_with_nature": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Protection from Magic": {
+    "id": "315",
+    "name": "Protection from Magic",
+    "attributeBlocks": {
+      "this": {
+        "spell": "VII",
+        "duration": "phase",
+        "target": "character",
+        "text": "Immune to spells for one phase",
+        "magic_color": "gold",
+        "original_game": "",
+        "alt_monsters1_game": "",
+        "host_okay": "",
+        "magic_protection": "",
+        "nullify": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      },
+      "phase_chit": {
+        "phase_chit": "",
+        "text": "Protection from Magic"
+      },
+      "phase_chit_effects": {
+        "nullify": "",
+        "magic_protection": ""
+      }
+    },
+    "parts": []
+  },
+  "Shielded Lantern": {
+    "id": "351",
+    "name": "Shielded Lantern",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "base_price": "8",
+        "weight": "L",
+        "text": "Extra phase in caves",
+        "original_game": "",
+        "extra_cave_phase": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Magic Wand": {
+    "id": "374",
+    "name": "Magic Wand",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "large",
+        "base_price": "17",
+        "text": "Control red die on spell rolls",
+        "notoriety": "10",
+        "fame": "-10",
+        "great": "",
+        "original_game": "",
+        "red_die": "wish,curse,powerofthepit,transform,lost,violentstorm,magicmissil,attackspell",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Lucky Charm": {
+    "id": "361",
+    "name": "Lucky Charm",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "large",
+        "base_price": "14",
+        "text": "Roll 1 die all rolls",
+        "original_game": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  },
+  "Pony": {
+    "id": "1911",
+    "name": "Pony",
+    "attributeBlocks": {
+      "this": {
+        "horse": "pony",
+        "move_bonus": "double",
+        "vulnerability": "M",
+        "base_price": "16",
+        "magic": "",
+        "item": "",
+        "super_realm": "",
+        "icon_folder": "wesnoth/units/monsters",
+        "icon_size": "1",
+        "icon_type": "horse",
+        "horse_holder": "Bashkar Dwelling"
+      },
+      "trot": {
+        "move_speed": "4",
+        "strength": "L",
+        "chit_color": "tan"
+      },
+      "gallop": {
+        "move_speed": "2",
+        "strength": "L",
+        "chit_color": "tan"
+      }
+    },
+    "parts": []
+  }
+}

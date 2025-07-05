@@ -1,0 +1,209 @@
+{
+  "Light Bow": {
+    "id": "1998",
+    "name": "Light Bow",
+    "attributeBlocks": {
+      "this": {
+        "weight": "L",
+        "length": "14",
+        "base_price": "6",
+        "missile": "",
+        "two_handed": "",
+        "weapon": "",
+        "icon_type": "light_bow",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": "",
+        "bow": ""
+      },
+      "unalerted": {
+        "strength": "L",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "attack_speed": "1",
+        "strength": "L",
+        "sharpness": "2",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Control Bats": {
+    "id": "289",
+    "name": "Control Bats",
+    "attributeBlocks": {
+      "this": {
+        "spell": "VII",
+        "duration": "day",
+        "target": "bats",
+        "text": "MOVE and FIGHT with bats",
+        "magic_color": "any",
+        "original_game": "",
+        "control": "",
+        "host_okay": "",
+        "alt_monsters1_game": "",
+        "benevolent": "",
+        "rw_expansion_1": "",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Small Blessing": {
+    "id": "273",
+    "name": "Small Blessing",
+    "attributeBlocks": {
+      "this": {
+        "spell": "I",
+        "duration": "instant",
+        "target": "character",
+        "text": "Gets one WISH (roll)",
+        "magic_color": "white",
+        "original_game": "",
+        "wish": "",
+        "alt_monsters1_game": "",
+        "rw_expansion_1": "",
+        "table": "wish",
+        "learnable": ""
+      }
+    },
+    "parts": []
+  },
+  "Short Sword": {
+    "id": "2003",
+    "name": "Short Sword",
+    "attributeBlocks": {
+      "this": {
+        "weight": "L",
+        "length": "3",
+        "base_price": "4",
+        "weapon": "",
+        "icon_type": "short_sword",
+        "icon_folder": "weapons",
+        "item": "",
+        "super_realm": ""
+      },
+      "unalerted": {
+        "strength": "L",
+        "sharpness": "1",
+        "chit_color": "white"
+      },
+      "alerted": {
+        "strength": "L",
+        "sharpness": "1",
+        "chit_color": "red"
+      }
+    },
+    "parts": []
+  },
+  "Helmet": {
+    "id": "1993",
+    "name": "Helmet",
+    "attributeBlocks": {
+      "this": {
+        "vulnerability": "M",
+        "weight": "M",
+        "armor_smash": "",
+        "armor": "",
+        "icon_type": "helmet",
+        "facing": "dark",
+        "armor_row": "2",
+        "ret_dw": "House",
+        "icon_folder": "armor",
+        "item": "",
+        "super_realm": "",
+        "helmet": ""
+      },
+      "intact": {
+        "base_price": "5",
+        "chit_color": "gray"
+      },
+      "damaged": {
+        "base_price": "3",
+        "chit_color": "white"
+      }
+    },
+    "parts": []
+  },
+  "Breastplate": {
+    "id": "1989",
+    "name": "Breastplate",
+    "attributeBlocks": {
+      "this": {
+        "vulnerability": "M",
+        "weight": "M",
+        "armor_swing": "",
+        "armor_thrust": "",
+        "armor": "",
+        "icon_type": "breastplate",
+        "facing": "dark",
+        "armor_row": "2",
+        "ret_dw": "Guard",
+        "icon_folder": "armor",
+        "item": "",
+        "super_realm": "",
+        "breastplate": ""
+      },
+      "intact": {
+        "base_price": "9",
+        "chit_color": "gray"
+      },
+      "damaged": {
+        "base_price": "6",
+        "chit_color": "white"
+      }
+    },
+    "parts": []
+  },
+  "Shield": {
+    "id": "1985",
+    "name": "Shield",
+    "attributeBlocks": {
+      "this": {
+        "vulnerability": "M",
+        "weight": "M",
+        "shield": "",
+        "armor_choice": "",
+        "armor": "",
+        "icon_type": "shield",
+        "facing": "dark",
+        "armor_row": "1",
+        "ret_dw": "House",
+        "icon_folder": "armor",
+        "item": "",
+        "super_realm": ""
+      },
+      "intact": {
+        "base_price": "7",
+        "chit_color": "gray"
+      },
+      "damaged": {
+        "base_price": "5",
+        "chit_color": "white"
+      }
+    },
+    "parts": []
+  },
+  "Penetrating Grease": {
+    "id": "349",
+    "name": "Penetrating Grease",
+    "attributeBlocks": {
+      "this": {
+        "treasure": "small",
+        "text": "Weapon ignores all armor (discard to crone)",
+        "base_price": "4",
+        "discard": "crone",
+        "potion": "",
+        "original_game": "",
+        "ignore_armor": "",
+        "sticks_weapon": "",
+        "alt_monsters1_game": "",
+        "facing": "face_dn",
+        "rw_expansion_1": "",
+        "item": ""
+      }
+    },
+    "parts": []
+  }
+}

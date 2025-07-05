@@ -24,9 +24,10 @@ interface SessionMapProps {
   characterIcons?: CharacterMapIcon[];
   showCharacterIcons?: boolean;
   selectedDay?: string; // New prop for dynamic map state
+  onMapReady?: () => void; // Callback when map is ready
 }
 
-const SessionMap: React.FC<SessionMapProps> = ({ sessionId, characterIcons = [], showCharacterIcons = true, selectedDay }) => {
+const SessionMap: React.FC<SessionMapProps> = ({ sessionId, characterIcons = [], showCharacterIcons = true, selectedDay, onMapReady }) => {
   const [mapData, setMapData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +70,10 @@ const SessionMap: React.FC<SessionMapProps> = ({ sessionId, characterIcons = [],
           }
         }
         setTileDataCache(tileData);
+        // Signal that the map is ready
+        if (onMapReady) {
+          onMapReady();
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load map data');
       } finally {
